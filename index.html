@@ -74,7 +74,7 @@
   .btn-box .logo-circle{ margin-top:0; }
   .btn-box .subtitle{ margin-bottom:20px; }
   .btn-box .year-label{ margin-bottom:0; }
-  .btn-box #linkList{ margin-top:16px; }
+  .btn-box #menuList{ margin-top:16px; }
 
   .btn{
     display:flex; align-items:center; justify-content:center;
@@ -148,11 +148,12 @@
       </div>
     </div>
 
-    <div class="screen" id="screen-links">
+    <!-- Satu screen generik dipakai ulang untuk SEMUA level menu (menu, sub-menu, sub-sub-menu, dst) -->
+    <div class="screen" id="screen-menu">
       <div class="btn-box">
-        <span class="year-label" id="yearLabel">Tahun</span>
-        <div id="linkList"></div>
-        <button class="btn btn-back" onclick="goTo('screen-year')">Kembali</button>
+        <span class="year-label" id="menuLabel">Menu</span>
+        <div id="menuList"></div>
+        <button class="btn btn-back" onclick="goBackMenu()">Kembali</button>
       </div>
     </div>
 
@@ -167,12 +168,22 @@ const SITE_DATA = {
   background: { type: "image", value: "kotamagelang.jpg" },
   tahun: {
     "2026": [
-      { label: "Profil Kelurahan", 
-       item :[
-  { sejarah: "sejarah",
-   item: [
-          { label: "andeca andeci", url: "https://gelangan.magelangkota.go.id" },
-          { label: "zedoot mazz", url: "https://gelangan.magelangkota.go.id" },
+      {
+        label: "Profil Kelurahan",
+        items: [
+          {
+            label: "Sejarah",
+            items: [
+              { label: "Sejarah Awal", url: "https://gelangan.magelangkota.go.id" },
+              { label: "Sejarah Perkembangan", url: "https://gelangan.magelangkota.go.id" }
+            ]
+          },
+          { label: "Visi & Misi", url: "https://gelangan.magelangkota.go.id" },
+          { label: "Struktur Organisasi", url: "https://gelangan.magelangkota.go.id" }
+        ]
+      },
+      { label: "andeca andeci", url: "https://gelangan.magelangkota.go.id" },
+      { label: "zedoot mazz", url: "https://gelangan.magelangkota.go.id" },
       { label: "Uji Coba", url: "https://gelangan.magelangkota.go.id" }
     ],
     "2027": [
@@ -181,7 +192,12 @@ const SITE_DATA = {
     ]
   }
 };
+
 const bodyEl = document.getElementById('body');
+
+// Tumpukan (stack) untuk melacak posisi menu saat ini, seberapa dalam pun levelnya.
+// Setiap elemen stack: { label: "judul layar", items: [...] }
+let menuStack = [];
 
 function goTo(id){
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -209,22 +225,60 @@ function renderYearButtons(){
   });
 }
 
+// Dipanggil saat memilih tahun -> membuka level menu paling atas untuk tahun itu
 function openYear(year){
-  document.getElementById('yearLabel').textContent = "Tahun " + year;
-  const list = document.getElementById('linkList');
-  list.innerHTML = "";
   const items = SITE_DATA.tahun[year] || [];
-  if(items.length === 0){
-    list.innerHTML = '<p style="color:#374151;">Belum ada data untuk tahun ini.</p>';
+  menuStack = [{ label: "Tahun " + year, items: items }];
+  renderCurrentMenu();
+  goTo('screen-menu');
+}
+
+// Dipanggil saat mengklik tombol menu yang punya sub-menu -> naik satu level
+function openSubmenu(item){
+  menuStack.push({ label: item.label, items: item.items });
+  renderCurrentMenu();
+}
+
+// Tombol "Kembali" di layar menu: turun satu level, atau kembali ke pilih tahun jika sudah di level teratas
+function goBackMenu(){
+  menuStack.pop();
+  if(menuStack.length === 0){
+    goTo('screen-year');
   } else {
-    items.forEach(item => {
+    renderCurrentMenu();
+  }
+}
+
+// Merender level menu yang sedang aktif (paling atas dari stack)
+function renderCurrentMenu(){
+  const current = menuStack[menuStack.length - 1];
+  document.getElementById('menuLabel').textContent = current.label;
+
+  const list = document.getElementById('menuList');
+  list.innerHTML = "";
+
+  const items = current.items || [];
+  if(items.length === 0){
+    list.innerHTML = '<p style="color:#374151;">Belum ada data untuk menu ini.</p>';
+    return;
+  }
+
+  items.forEach(item => {
+    if(item.items && item.items.length){
+      // Item ini punya sub-menu -> tombol yang membuka level berikutnya
+      const btn = document.createElement('button');
+      btn.className = "btn";
+      btn.textContent = item.label + " \u203A";
+      btn.onclick = () => openSubmenu(item);
+      list.appendChild(btn);
+    } else {
+      // Item ini link biasa -> buka di tab baru
       const a = document.createElement('a');
       a.href = item.url; a.target = "_blank"; a.rel = "noopener"; a.className = "btn";
       a.textContent = item.label;
       list.appendChild(a);
-    });
-  }
-  goTo('screen-links');
+    }
+  });
 }
 
 function renderSite(){

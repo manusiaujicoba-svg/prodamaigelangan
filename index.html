@@ -159,6 +159,7 @@
   .modal-btn.apply{ background: var(--primary); color:#fff; }
   .modal-btn.reset{ background:#f3f4f6; color:#374151; }
   .modal-btn.close{ background:#fee2e2; color:#b91c1c; }
+  .modal-btn.danger{ background:#fee2e2; color:#b91c1c; }
   .hint{ font-size:0.75rem; color:#6b7280; margin-top:4px; }
   .bg-type-group{ display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
   .bg-type-group button{ flex:1; min-width:70px; padding:8px; font-size:0.8rem; border-radius:8px; border:1px solid #d1d5db; background:#f9fafb; cursor:pointer; }
@@ -278,6 +279,9 @@
         <p class="hint">Tempel link gambar (jpg/png). Berlaku untuk SEMUA pengunjung.</p>
       </div>
 
+      <button class="modal-btn danger" style="width:100%; margin-top:18px;" onclick="resetTampilanKeDefault()">&#8635; Reset Tampilan ke Setelan Awal</button>
+      <p class="hint">Ini akan mengembalikan nama, subjudul, logo, dan latar belakang ke nilai bawaan (tidak menghapus menu link).</p>
+
       <div class="row">
         <button class="modal-btn reset" onclick="closeModal()">Batal</button>
         <button class="modal-btn apply" onclick="applyBg()">Simpan untuk Semua</button>
@@ -294,6 +298,8 @@
       </div>
       <div id="menuItemsWrap" style="margin-top:16px;"></div>
       <button class="modal-btn" style="width:100%; background:#e5f0ff; color:var(--primary-dark); margin-top:10px;" onclick="addMenuItem()">+ Tambah Menu</button>
+
+      <button class="modal-btn danger" style="width:100%; margin-top:18px;" onclick="resetMenuKeDefault()">&#8635; Reset Menu ke Setelan Awal</button>
       <p class="hint" style="margin-top:14px;">Perubahan menu tersimpan di database dan langsung tampil untuk SEMUA pengunjung.</p>
       <div class="row">
         <button class="modal-btn reset" onclick="closeMenuModal()">Batal</button>
@@ -325,8 +331,8 @@ const DEFAULT_DATA = {
       { label: "Uji Coba", url: "https://gelangan.magelangkota.go.id" }
     ],
     "2027": [
-      { label: "Profil Kelurahan", url: "https://gelangan.magelangkota.go.id" }
-{ label: "Diisi opo meneh", url: "https://gelangan.magelangkota.go.id" }
+      { label: "Profil Kelurahan", url: "https://gelangan.magelangkota.go.id" },
+      { label: "Diisi opo meneh", url: "https://gelangan.magelangkota.go.id" }
     ]
   }
 };
@@ -506,6 +512,17 @@ function applyBg(){
   closeModal();
 }
 
+function resetTampilanKeDefault(){
+  if(!confirm("Yakin ingin mengembalikan nama, subjudul, logo, dan latar belakang ke setelan awal? Menu link tidak akan terhapus.")) return;
+  saveSiteData({
+    namaKelurahan: DEFAULT_DATA.namaKelurahan,
+    subtitle: DEFAULT_DATA.subtitle,
+    logoUrl: DEFAULT_DATA.logoUrl,
+    background: JSON.parse(JSON.stringify(DEFAULT_DATA.background))
+  });
+  closeModal();
+}
+
 const menuModalOverlay = document.getElementById('menuModalOverlay');
 let activeMenuYear = "2026";
 let draftTahun = null;
@@ -556,6 +573,11 @@ function addMenuItem(){
 }
 function deleteMenuItem(idx){
   draftTahun[activeMenuYear].splice(idx,1);
+  renderMenuItems();
+}
+function resetMenuKeDefault(){
+  if(!confirm("Yakin ingin mengembalikan SEMUA menu link (tahun 2026 & 2027) ke setelan awal? Perubahan menu yang belum disimpan akan hilang.")) return;
+  draftTahun = JSON.parse(JSON.stringify(DEFAULT_DATA.tahun));
   renderMenuItems();
 }
 function saveMenu(){

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<title>Microsite Kelurahan</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+<style>
+  :root{
+    --card-bg: rgba(255,255,255,0.95);
+    --primary: #2a5298;
+    --primary-dark: #1e3c72;
+    --text: #1f2937;
+    --radius: 16px;
+    --btn-height: 56px;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    min-height:100vh;
+    min-height:100dvh;
+    font-family: 'Arial Narrow', Arial, sans-serif;
+    background: linear-gradient(135deg,#1e3c72,#2a5298);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 20px 16px;
+    transition: background 0.4s ease;
+    color: var(--text);
+  }
+
+  .container{ width:100%; max-width:480px; text-align:center; }
+  .screen{ display:none; animation: fadeIn .35s ease; }
+  .screen.active{ display:block; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+  .logo-circle{
+    width: clamp(72px, 22vw, 96px);
+    height: clamp(72px, 22vw, 96px);
+    border-radius:50%;
+    background: rgba(255,255,255,0.15);
+    border:3px solid rgba(255,255,255,0.6);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 16px auto;
+    font-size: clamp(30px, 8vw, 40px);
+    overflow:hidden;
+    cursor:pointer;
+  }
+
+  h1{
+    color:#fff;
+    font-size: clamp(1.25rem, 5vw, 1.6rem);
+    margin-bottom:6px;
+    text-shadow:0 2px 8px rgba(0,0,0,0.25);
+    line-height:1.25;
+  }
+  .subtitle{
+    color:rgba(255,255,255,0.85);
+    margin-bottom:24px;
+    font-size: clamp(0.85rem, 3.2vw, 0.95rem);
+  }
+
+  .btn-box{
+    background: linear-gradient(135deg, rgba(0,0,0,0.22), rgba(0,0,0,0.08));
+    border: 1px solid rgba(255,255,255,0.20);
+    border-radius: 24px;
+    padding: clamp(20px, 6vw, 28px) clamp(16px, 5vw, 22px) 20px;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .btn-box .logo-circle{ margin-top:0; }
+  .btn-box .subtitle{ margin-bottom:20px; }
+  .btn-box .year-label{ margin-bottom:0; }
+  .btn-box #linkList{ margin-top:16px; }
+
+  .btn{
+    display:flex; align-items:center; justify-content:center;
+    width:100%; min-height: var(--btn-height);
+    padding: 12px 18px; margin: 10px 0;
+    border:none; border-radius: var(--radius);
+    background: var(--card-bg); color: var(--primary-dark);
+    font-size: clamp(0.92rem, 3.6vw, 1.05rem);
+    font-weight:600; cursor:pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+    transition: transform .15s ease, box-shadow .15s ease;
+    text-decoration:none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:hover{ transform: translateY(-3px); box-shadow:0 10px 24px rgba(0,0,0,0.22); }
+  .btn:active{ transform: translateY(0) scale(0.98); }
+  .btn:first-child{ margin-top:0; }
+  .btn:last-child{ margin-bottom:0; }
+
+  .btn-year{ display:inline-flex; width:47%; margin:6px 1.5%; }
+  .year-row{ display:flex; flex-wrap:wrap; justify-content:center; }
+  .year-row .btn:first-child{ margin-top:6px; }
+  .year-row .btn:last-child{ margin-bottom:6px; }
+
+  .btn-back{
+    margin-top:18px;
+    background: rgba(255,255,255,0.15);
+    color:#fff;
+    border:1px solid rgba(255,255,255,0.5);
+    box-shadow:none;
+    font-weight:500;
+  }
+  .btn-back:hover{ background: rgba(255,255,255,0.25); }
+
+  .year-label{
+    display:inline-block; color:#fff; font-weight:700; margin-bottom:18px;
+    font-size: clamp(0.95rem, 3.8vw, 1.1rem);
+    background: rgba(0,0,0,0.2); padding:6px 16px; border-radius:999px;
+  }
+
+  .gear-btn{
+    display:none;
+    position:fixed;
+    top: max(16px, env(safe-area-inset-top));
+    right: max(16px, env(safe-area-inset-right));
+    width:44px;height:44px; border-radius:50%;
+    background: rgba(255,255,255,0.2);
+    border:1px solid rgba(255,255,255,0.5);
+    color:#fff; font-size:18px; cursor:pointer; z-index:50;
+    backdrop-filter: blur(4px);
+    align-items:center; justify-content:center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .gear-btn.show{ display:flex; }
+  .gear-btn:hover{ background: rgba(255,255,255,0.35); }
+  #menuBtn{ right: calc(max(16px, env(safe-area-inset-right)) + 52px); }
+  #logoutBtn{ right: calc(max(16px, env(safe-area-inset-right)) + 104px); }
+
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background: rgba(0,0,0,0.55); z-index:100;
+    align-items:flex-end; justify-content:center; padding:0;
+  }
+  .modal-overlay.active{ display:flex; }
+  .modal{
+    background:#fff; color:#1f2937; width:100%; max-width:420px;
+    border-radius:20px 20px 0 0;
+    padding: 22px 20px calc(20px + env(safe-area-inset-bottom));
+    max-height:88vh; max-height:88dvh; overflow-y:auto; text-align:left;
+  }
+  .modal h2{ font-size:1.1rem; margin-bottom:14px; }
+  .modal label{ display:block; font-size:0.85rem; font-weight:600; margin:14px 0 6px; }
+  .modal input[type=text], .modal input[type=password], .modal input[type=color]{
+    width:100%; padding:12px 10px; border:1px solid #d1d5db; border-radius:8px; font-size:16px;
+  }
+  .row{ display:flex; gap:10px; margin-top:18px; }
+  .modal-btn{ flex:1; padding:12px; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9rem; min-height:46px; }
+  .modal-btn.apply{ background: var(--primary); color:#fff; }
+  .modal-btn.reset{ background:#f3f4f6; color:#374151; }
+  .modal-btn.close{ background:#fee2e2; color:#b91c1c; }
+  .hint{ font-size:0.75rem; color:#6b7280; margin-top:4px; }
+  .bg-type-group{ display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
+  .bg-type-group button{ flex:1; min-width:70px; padding:8px; font-size:0.8rem; border-radius:8px; border:1px solid #d1d5db; background:#f9fafb; cursor:pointer; }
+  .bg-type-group button.active{ background: var(--primary); color:#fff; border-color: var(--primary); }
+  .field{ display:none; }
+  .field.show{ display:block; }
+  .status-badge{
+    position:fixed; bottom: max(14px, env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%);
+    background:rgba(0,0,0,0.6); color:#fff; font-size:0.72rem; padding:8px 16px; border-radius:999px;
+    z-index:40; display:none; max-width:90vw; text-align:center;
+  }
+  .status-badge.show{ display:block; }
+
+  @media (max-width: 360px){
+    body{ padding: 14px 10px; }
+    .gear-btn{ width:38px; height:38px; font-size:16px; }
+    #menuBtn{ right: calc(max(12px, env(safe-area-inset-right)) + 44px); }
+    #logoutBtn{ right: calc(max(12px, env(safe-area-inset-right)) + 88px); }
+    .btn-box{ padding: 18px 14px 16px; }
+    .btn{ font-size:0.9rem; padding:10px 14px; }
+  }
+  @media (max-height: 480px){ .modal{ max-height:96dvh; } }
+</style>
+</head>
+<body id="body">
+
+  <button class="gear-btn" id="gearBtn" title="Pengaturan Tampilan">&#9881;&#65039;</button>
+  <button class="gear-btn" id="menuBtn" title="Kelola Menu Link">&#128203;</button>
+  <button class="gear-btn" id="logoutBtn" title="Keluar dari Admin">&#128274;</button>
+
+  <div class="container">
+
+    <div class="screen active" id="screen-home">
+      <div class="btn-box">
+        <div class="logo-circle" id="homeLogo" onclick="handleLogoTap()">
+          <span id="homeLogoEmoji">&#127968;</span>
+          <img id="homeLogoImg" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:50%;" alt="Logo Kelurahan">
+        </div>
+        <h1 id="namaKelurahan">Memuat...</h1>
+        <p class="subtitle" id="subtitleText"></p>
+        <button class="btn" onclick="goTo('screen-year')">Masuk</button>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-year">
+      <div class="btn-box">
+        <div class="logo-circle">&#128197;</div>
+        <h1>Pilih Tahun</h1>
+        <p class="subtitle">Silakan pilih data tahun yang ingin dilihat</p>
+        <div class="year-row">
+          <button class="btn btn-year" onclick="openYear('2026')">2026</button>
+          <button class="btn btn-year" onclick="openYear('2027')">2027</button>
+        </div>
+        <button class="btn btn-back" onclick="goTo('screen-home')">Kembali</button>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-links">
+      <div class="btn-box">
+        <span class="year-label" id="yearLabel">Tahun</span>
+        <div id="linkList"></div>
+        <button class="btn btn-back" onclick="goTo('screen-year')">Kembali</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="status-badge" id="statusBadge"></div>
+
+  <div class="modal-overlay" id="loginModalOverlay">
+    <div class="modal" style="max-width:420px;">
+      <h2>&#128274; Masuk sebagai Admin</h2>
+      <label>Email Admin</label>
+      <input type="text" id="adminEmailInput" placeholder="admin@contoh.com">
+      <label>Kata Sandi</label>
+      <input type="password" id="adminPasswordInput" placeholder="Kata sandi" onkeydown="if(event.key==='Enter') verifyAdminLogin()">
+      <p class="hint" id="loginError" style="color:#dc2626; display:none;">Email atau kata sandi salah.</p>
+      <div class="row">
+        <button class="modal-btn reset" onclick="closeLoginModal()">Batal</button>
+        <button class="modal-btn apply" onclick="verifyAdminLogin()">Masuk</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h2>&#9881;&#65039; Pengaturan Tampilan</h2>
+
+      <label>Nama Kelurahan</label>
+      <input type="text" id="namaInput" placeholder="Contoh: Kelurahan Sukamaju">
+
+      <label>Subjudul (di bawah nama kelurahan)</label>
+      <input type="text" id="subtitleInput" placeholder="Contoh: Layanan & Informasi Digital">
+
+      <label>URL Logo (opsional)</label>
+      <input type="text" id="logoUrlInput" placeholder="https://contoh.com/logo-kelurahan.png">
+      <p class="hint">Tempel link gambar logo (format persegi lebih rapi). Kosongkan untuk pakai ikon bawaan.</p>
+
+      <label>Jenis Latar Belakang</label>
+      <div class="bg-type-group">
+        <button type="button" data-type="color" onclick="setBgType('color')">Warna</button>
+        <button type="button" data-type="gradient" onclick="setBgType('gradient')">Gradasi</button>
+        <button type="button" data-type="image" onclick="setBgType('image')">Gambar URL</button>
+      </div>
+
+      <div class="field" id="field-color">
+        <label>Pilih Warna</label>
+        <input type="color" id="colorInput" value="#2a5298">
+      </div>
+      <div class="field" id="field-gradient">
+        <label>Warna Awal</label>
+        <input type="color" id="gradStart" value="#1e3c72">
+        <label>Warna Akhir</label>
+        <input type="color" id="gradEnd" value="#2a5298">
+      </div>
+      <div class="field" id="field-image">
+        <label>URL Gambar</label>
+        <input type="text" id="imageUrlInput" placeholder="https://contoh.com/foto.jpg">
+        <p class="hint">Tempel link gambar (jpg/png). Berlaku untuk SEMUA pengunjung.</p>
+      </div>
+
+      <div class="row">
+        <button class="modal-btn reset" onclick="closeModal()">Batal</button>
+        <button class="modal-btn apply" onclick="applyBg()">Simpan untuk Semua</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="menuModalOverlay">
+    <div class="modal">
+      <h2>&#128203; Kelola Menu Link</h2>
+      <div class="bg-type-group" style="margin-top:0;">
+        <button type="button" id="tabYear2026" onclick="switchMenuYear('2026')">Tahun 2026</button>
+        <button type="button" id="tabYear2027" onclick="switchMenuYear('2027')">Tahun 2027</button>
+      </div>
+      <div id="menuItemsWrap" style="margin-top:16px;"></div>
+      <button class="modal-btn" style="width:100%; background:#e5f0ff; color:var(--primary-dark); margin-top:10px;" onclick="addMenuItem()">+ Tambah Menu</button>
+      <p class="hint" style="margin-top:14px;">Perubahan menu tersimpan di database dan langsung tampil untuk SEMUA pengunjung.</p>
+      <div class="row">
+        <button class="modal-btn reset" onclick="closeMenuModal()">Batal</button>
+        <button class="modal-btn apply" onclick="saveMenu()">Simpan untuk Semua</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+
+const firebaseConfig = {
+  apiKey: "GANTI_DENGAN_API_KEY_ANDA",
+  authDomain: "GANTI.firebaseapp.com",
+  projectId: "GANTI_PROJECT_ID",
+};
+
+const SITE_ID = "utama";
+
+const DEFAULT_DATA = {
+  namaKelurahan: "Kelurahan Gelangan",
+  subtitle: "Progres Prodamai Kelurahan",
+  logoUrl: "",
+  background: { type: "gradient", value: "linear-gradient(135deg,#1e3c72,#2a5298)" },
+  tahun: {
+    "2026": [
+      { label: "Profil Kelurahan", url: "https://contoh.com/profil-2026" },
+      { label: "Data Kependudukan", url: "https://contoh.com/data-2026" }
+    ],
+    "2027": [
+      { label: "Profil Kelurahan", url: "https://contoh.com/profil-2027" }
+    ]
+  }
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+const docRef = db.collection("microsites").doc(SITE_ID);
+
+let siteData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+const bodyEl = document.getElementById('body');
+
+function showStatus(msg, timeout){
+  const el = document.getElementById('statusBadge');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(showStatus._t);
+  showStatus._t = setTimeout(() => el.classList.remove('show'), timeout || 2500);
+}
+
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function openYear(year){
+  document.getElementById('yearLabel').textContent = "Tahun " + year;
+  const list = document.getElementById('linkList');
+  list.innerHTML = "";
+  const items = (siteData.tahun && siteData.tahun[year]) || [];
+  if(items.length === 0){
+    list.innerHTML = '<p style="color:#374151;">Belum ada data untuk tahun ini.</p>';
+  } else {
+    items.forEach(item => {
+      const a = document.createElement('a');
+      a.href = item.url; a.target = "_blank"; a.rel = "noopener"; a.className = "btn";
+      a.textContent = item.label;
+      list.appendChild(a);
+    });
+  }
+  goTo('screen-links');
+}
+
+function applyBackgroundValue(bg){
+  if(!bg) return;
+  if(bg.type === "image"){
+    bodyEl.style.background = `url("${bg.value}") center/cover no-repeat fixed`;
+  } else {
+    bodyEl.style.background = bg.value;
+  }
+}
+
+function renderSite(){
+  document.getElementById('namaKelurahan').textContent = siteData.namaKelurahan || "Kelurahan";
+  document.getElementById('subtitleText').textContent = siteData.subtitle || "";
+  applyBackgroundValue(siteData.background);
+  document.title = siteData.namaKelurahan || "Microsite Kelurahan";
+
+  const emojiEl = document.getElementById('homeLogoEmoji');
+  const imgEl = document.getElementById('homeLogoImg');
+  if(siteData.logoUrl){
+    imgEl.src = siteData.logoUrl;
+    imgEl.style.display = "block";
+    emojiEl.style.display = "none";
+  } else {
+    imgEl.style.display = "none";
+    emojiEl.style.display = "inline";
+  }
+}
+
+docRef.onSnapshot((doc) => {
+  siteData = doc.exists ? doc.data() : JSON.parse(JSON.stringify(DEFAULT_DATA));
+  renderSite();
+}, (err) => {
+  console.error("Gagal membaca data:", err);
+  renderSite();
+  showStatus("Tidak bisa terhubung ke database, menampilkan data cadangan.", 4000);
+});
+
+async function saveSiteData(partial){
+  Object.assign(siteData, partial);
+  try{
+    await docRef.set(siteData, { merge:true });
+    showStatus("Tersimpan & langsung tampil untuk semua pengunjung.");
+  }catch(err){
+    console.error(err);
+    alert("Gagal menyimpan ke database. Pastikan sudah login sebagai admin dan aturan Firestore benar.\n\n" + err.message);
+  }
+}
+
+const loginModalOverlay = document.getElementById('loginModalOverlay');
+let logoTapCount = 0;
+let logoTapTimer = null;
+
+function handleLogoTap(){
+  logoTapCount++;
+  clearTimeout(logoTapTimer);
+  logoTapTimer = setTimeout(() => { logoTapCount = 0; }, 2000);
+  if(logoTapCount >= 5){ logoTapCount = 0; openLoginModal(); }
+}
+
+function openLoginModal(){
+  document.getElementById('adminEmailInput').value = "";
+  document.getElementById('adminPasswordInput').value = "";
+  document.getElementById('loginError').style.display = "none";
+  loginModalOverlay.classList.add('active');
+}
+function closeLoginModal(){ loginModalOverlay.classList.remove('active'); }
+loginModalOverlay.addEventListener('click', (e) => { if(e.target === loginModalOverlay) closeLoginModal(); });
+
+function verifyAdminLogin(){
+  const email = document.getElementById('adminEmailInput').value.trim();
+  const pass = document.getElementById('adminPasswordInput').value;
+  auth.signInWithEmailAndPassword(email, pass)
+    .then(() => { closeLoginModal(); })
+    .catch((err) => {
+      console.error(err);
+      document.getElementById('loginError').style.display = "block";
+    });
+}
+
+document.getElementById('logoutBtn').onclick = () => {
+  auth.signOut().then(() => showStatus("Sudah keluar dari mode admin."));
+};
+
+auth.onAuthStateChanged((user) => {
+  const isAdmin = !!user;
+  document.getElementById('gearBtn').classList.toggle('show', isAdmin);
+  document.getElementById('menuBtn').classList.toggle('show', isAdmin);
+  document.getElementById('logoutBtn').classList.toggle('show', isAdmin);
+});
+
+const modalOverlay = document.getElementById('modalOverlay');
+document.getElementById('gearBtn').onclick = () => {
+  modalOverlay.classList.add('active');
+  document.getElementById('namaInput').value = siteData.namaKelurahan || "";
+  document.getElementById('subtitleInput').value = siteData.subtitle || "";
+  document.getElementById('logoUrlInput').value = siteData.logoUrl || "";
+  const bg = siteData.background || DEFAULT_DATA.background;
+  if(bg.type === 'image'){
+    setBgType('image');
+    document.getElementById('imageUrlInput').value = bg.value;
+  } else if(bg.type === 'color'){
+    setBgType('color');
+    document.getElementById('colorInput').value = bg.value;
+  } else {
+    setBgType('gradient');
+  }
+};
+function closeModal(){ modalOverlay.classList.remove('active'); }
+modalOverlay.addEventListener('click', (e) => { if(e.target === modalOverlay) closeModal(); });
+
+let currentBgType = "gradient";
+function setBgType(type){
+  currentBgType = type;
+  document.querySelectorAll('.bg-type-group button[data-type]').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`.bg-type-group button[data-type="${type}"]`);
+  if(btn) btn.classList.add('active');
+  document.querySelectorAll('#modalOverlay .field').forEach(f => f.classList.remove('show'));
+  const field = document.getElementById('field-' + type);
+  if(field) field.classList.add('show');
+}
+
+function applyBg(){
+  let bg;
+  if(currentBgType === "color"){
+    bg = { type:"color", value: document.getElementById('colorInput').value };
+  } else if(currentBgType === "gradient"){
+    const s = document.getElementById('gradStart').value;
+    const e = document.getElementById('gradEnd').value;
+    bg = { type:"gradient", value: `linear-gradient(135deg, ${s}, ${e})` };
+  } else if(currentBgType === "image"){
+    const url = document.getElementById('imageUrlInput').value.trim();
+    bg = url ? { type:"image", value:url } : siteData.background;
+  }
+  const nama = document.getElementById('namaInput').value.trim() || siteData.namaKelurahan;
+  const subtitle = document.getElementById('subtitleInput').value.trim();
+  const logoUrl = document.getElementById('logoUrlInput').value.trim();
+  saveSiteData({ background: bg, namaKelurahan: nama, subtitle: subtitle || siteData.subtitle, logoUrl: logoUrl });
+  closeModal();
+}
+
+const menuModalOverlay = document.getElementById('menuModalOverlay');
+let activeMenuYear = "2026";
+let draftTahun = null;
+
+document.getElementById('menuBtn').onclick = () => {
+  draftTahun = JSON.parse(JSON.stringify(siteData.tahun || DEFAULT_DATA.tahun));
+  menuModalOverlay.classList.add('active');
+  switchMenuYear(activeMenuYear);
+};
+function closeMenuModal(){ menuModalOverlay.classList.remove('active'); }
+menuModalOverlay.addEventListener('click', (e) => { if(e.target === menuModalOverlay) closeMenuModal(); });
+
+function switchMenuYear(year){
+  activeMenuYear = year;
+  document.getElementById('tabYear2026').classList.toggle('active', year === '2026');
+  document.getElementById('tabYear2027').classList.toggle('active', year === '2027');
+  renderMenuItems();
+}
+
+function renderMenuItems(){
+  const wrap = document.getElementById('menuItemsWrap');
+  wrap.innerHTML = "";
+  const items = draftTahun[activeMenuYear] || [];
+  if(items.length === 0){
+    wrap.innerHTML = '<p class="hint">Belum ada menu untuk tahun ini.</p>';
+  }
+  items.forEach((item, idx) => {
+    const row = document.createElement('div');
+    row.style.cssText = "border:1px solid #e5e7eb; border-radius:10px; padding:10px; margin-bottom:10px;";
+    row.innerHTML = `
+      <label style="margin-top:0;">Nama Tombol</label>
+      <input type="text" value="${escapeHtml(item.label)}" data-idx="${idx}" data-field="label" oninput="updateMenuField(this)">
+      <label>Link URL</label>
+      <input type="text" value="${escapeHtml(item.url)}" data-idx="${idx}" data-field="url" oninput="updateMenuField(this)">
+      <button class="modal-btn close" style="margin-top:10px; width:100%;" onclick="deleteMenuItem(${idx})">Hapus Menu Ini</button>
+    `;
+    wrap.appendChild(row);
+  });
+}
+function escapeHtml(str){ return String(str||"").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+function updateMenuField(el){
+  draftTahun[activeMenuYear][parseInt(el.dataset.idx,10)][el.dataset.field] = el.value;
+}
+function addMenuItem(){
+  if(!draftTahun[activeMenuYear]) draftTahun[activeMenuYear] = [];
+  draftTahun[activeMenuYear].push({ label:"Menu Baru", url:"https://" });
+  renderMenuItems();
+}
+function deleteMenuItem(idx){
+  draftTahun[activeMenuYear].splice(idx,1);
+  renderMenuItems();
+}
+function saveMenu(){
+  saveSiteData({ tahun: draftTahun });
+  closeMenuModal();
+}
+</script>
+</body>
+</html>

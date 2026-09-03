@@ -159,38 +159,21 @@
   </div>
 
 <script>
-/* =========================================================================
-   SEMUA ISI SITUS DIATUR DI SINI.
-   Untuk mengubah nama kelurahan, subjudul, logo, background, atau menu link:
-   edit langsung nilai-nilai di bawah ini, lalu upload ulang file index.html
-   ke GitHub (replace file lama). Perubahan langsung tampil setelah upload.
-   ========================================================================= */
-
 const SITE_DATA = {
 
-  // Nama yang tampil besar di halaman utama
   namaKelurahan: "Kelurahan Gelangan",
 
-  // Teks kecil di bawah nama kelurahan
   subtitle: "Progres Prodamai Kelurahan",
 
   // URL gambar logo (kosongkan "" untuk pakai ikon rumah bawaan)
   logoUrl: "",
 
-  // Latar belakang halaman. Pilih SALAH SATU jenis di bawah,
-  // lalu hapus/comment-out yang lain:
-
-  // 1) Gradasi warna
   // background: { type: "gradient", value: "linear-gradient(135deg,#1e3c72,#2a5298)" },
 
-  // 2) Warna solid — hapus tanda // di depan baris ini untuk memakainya
   // background: { type: "color", value: "#2a5298" },
 
-  // 3) Gambar lokal dari repo GitHub (sedang aktif dipakai)
   background: { type: "image", value: "kotamagelang.jpg" },
 
-  // Menu link, dikelompokkan per tahun.
-  // Tambah/hapus/ubah baris { label: "...", url: "..." } sesuai kebutuhan.
   tahun: {
     "2026": [
       { label: "Profil Kelurahan", url: "https://gelangan.magelangkota.go.id" },
@@ -202,10 +185,6 @@ const SITE_DATA = {
     ]
   }
 };
-
-/* ========================================================================
-   BAGIAN DI BAWAH INI TIDAK PERLU DIUBAH — hanya logika tampilan.
-   ======================================================================== */
 
 const bodyEl = document.getElementById('body');
 

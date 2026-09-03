@@ -7,7 +7,6 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
 <style>
   :root{
@@ -232,11 +231,9 @@
   <div class="modal-overlay" id="loginModalOverlay">
     <div class="modal" style="max-width:420px;">
       <h2>&#128274; Masuk sebagai Admin</h2>
-      <label>Email Admin</label>
-      <input type="text" id="adminEmailInput" placeholder="admin@contoh.com">
-      <label>Kata Sandi</label>
+      <label>Kata Sandi Admin</label>
       <input type="password" id="adminPasswordInput" placeholder="Kata sandi" onkeydown="if(event.key==='Enter') verifyAdminLogin()">
-      <p class="hint" id="loginError" style="color:#dc2626; display:none;">Email atau kata sandi salah.</p>
+      <p class="hint" id="loginError" style="color:#dc2626; display:none;">Kata sandi salah.</p>
       <div class="row">
         <button class="modal-btn reset" onclick="closeLoginModal()">Batal</button>
         <button class="modal-btn apply" onclick="verifyAdminLogin()">Masuk</button>
@@ -315,6 +312,8 @@ const firebaseConfig = {
 
 const SITE_ID = "utama";
 
+const ADMIN_PASSWORD = "anjaypremium";
+
 const DEFAULT_DATA = {
   namaKelurahan: "Kelurahan Gelangan",
   subtitle: "Progres Prodamai Kelurahan",
@@ -333,7 +332,6 @@ const DEFAULT_DATA = {
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const auth = firebase.auth();
 const docRef = db.collection("microsites").doc(SITE_ID);
 
 let siteData = JSON.parse(JSON.stringify(DEFAULT_DATA));
@@ -429,7 +427,6 @@ function handleLogoTap(){
 }
 
 function openLoginModal(){
-  document.getElementById('adminEmailInput').value = "";
   document.getElementById('adminPasswordInput').value = "";
   document.getElementById('loginError').style.display = "none";
   loginModalOverlay.classList.add('active');
@@ -437,27 +434,26 @@ function openLoginModal(){
 function closeLoginModal(){ loginModalOverlay.classList.remove('active'); }
 loginModalOverlay.addEventListener('click', (e) => { if(e.target === loginModalOverlay) closeLoginModal(); });
 
-function verifyAdminLogin(){
-  const email = document.getElementById('adminEmailInput').value.trim();
-  const pass = document.getElementById('adminPasswordInput').value;
-  auth.signInWithEmailAndPassword(email, pass)
-    .then(() => { closeLoginModal(); })
-    .catch((err) => {
-      console.error(err);
-      document.getElementById('loginError').style.display = "block";
-    });
-}
-
-document.getElementById('logoutBtn').onclick = () => {
-  auth.signOut().then(() => showStatus("Sudah keluar dari mode admin."));
-};
-
-auth.onAuthStateChanged((user) => {
-  const isAdmin = !!user;
+function setAdminUI(isAdmin){
   document.getElementById('gearBtn').classList.toggle('show', isAdmin);
   document.getElementById('menuBtn').classList.toggle('show', isAdmin);
   document.getElementById('logoutBtn').classList.toggle('show', isAdmin);
-});
+}
+
+function verifyAdminLogin(){
+  const pass = document.getElementById('adminPasswordInput').value;
+  if(pass === ADMIN_PASSWORD){
+    setAdminUI(true);
+    closeLoginModal();
+  } else {
+    document.getElementById('loginError').style.display = "block";
+  }
+}
+
+document.getElementById('logoutBtn').onclick = () => {
+  setAdminUI(false);
+  showStatus("Sudah keluar dari mode admin.");
+};
 
 const modalOverlay = document.getElementById('modalOverlay');
 document.getElementById('gearBtn').onclick = () => {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
-<title>Prodamai Kelurahan Gelangan</title>
+<title>Microsite Kelurahan</title>
 
 <style>
   :root{
@@ -159,23 +159,41 @@
   </div>
 
 <script>
+/* =========================================================================
+   SEMUA ISI SITUS DIATUR DI SINI.
+   Untuk mengubah nama kelurahan, subjudul, logo, background, atau menu link:
+   edit langsung nilai-nilai di bawah ini, lalu upload ulang file index.html
+   ke GitHub (replace file lama). Perubahan langsung tampil setelah upload.
+   ========================================================================= */
+
 const SITE_DATA = {
 
+  // Nama yang tampil besar di halaman utama
   namaKelurahan: "Kelurahan Gelangan",
+
+  // Teks kecil di bawah nama kelurahan
   subtitle: "Progres Prodamai Kelurahan",
+
+  // URL gambar logo (kosongkan "" untuk pakai ikon rumah bawaan)
   logoUrl: "",
+
+  // Latar belakang halaman. Pilih SALAH SATU jenis di bawah,
+  // lalu hapus/comment-out yang lain:
+
+  // 1) Gradasi warna
+  // background: { type: "gradient", value: "linear-gradient(135deg,#1e3c72,#2a5298)" },
+
+  // 2) Warna solid — hapus tanda // di depan baris ini untuk memakainya
+  // background: { type: "color", value: "#2a5298" },
+
+  // 3) Gambar lokal dari repo GitHub (sedang aktif dipakai)
   background: { type: "image", value: "kotamagelang.jpg" },
+
+  // Menu link, dikelompokkan per tahun.
+  // Tambah/hapus/ubah baris { label: "...", url: "..." } sesuai kebutuhan.
   tahun: {
     "2026": [
-{ label: "Dokumen Prodamai", children: [
-          { label: "Laporan Bulan 1", url: "https://gelangan.magelangkota.go.id" },
-          { label: "Laporan Bulan 2", url: "https://gelangan.magelangkota.go.id" },
-          { label: "Sub-submenu Lagi", children: [
-              { label: "Detail A", url: "https://gelangan.magelangkota.go.id" },
-              { label: "Detail B", url: "https://gelangan.magelangkota.go.id" }
       { label: "Profil Kelurahan", url: "https://gelangan.magelangkota.go.id" },
-          { label: "andeca andeci", url: "https://gelangan.magelangkota.go.id" },
-          { label: "zedoot mazz", url: "https://gelangan.magelangkota.go.id" },
       { label: "Uji Coba", url: "https://gelangan.magelangkota.go.id" }
     ],
     "2027": [
@@ -184,6 +202,11 @@ const SITE_DATA = {
     ]
   }
 };
+
+/* ========================================================================
+   BAGIAN DI BAWAH INI TIDAK PERLU DIUBAH — hanya logika tampilan.
+   ======================================================================== */
+
 const bodyEl = document.getElementById('body');
 
 function goTo(id){
